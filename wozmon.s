@@ -34,10 +34,11 @@ ESCAPE:
                 JSR     ECHO            ; Output it.
 
 GETLINE:
-                LDA     #$0D            ; Send CR
-                JSR     ECHO
-                LDA     #$0A            ; Send LF
-                JSR     ECHO
+                ;LDA     #$0D            ; Send CR
+                ;JSR     ECHO
+                ;LDA     #$0A            ; Send LF
+                ;JSR     ECHO
+				JSR		CRLF
 
                 LDY     #$01            ; Initialize text index.
 BACKSPACE:      DEY                     ; Back up text index.
@@ -113,7 +114,13 @@ NOTHEX:
                 BNE     NEXTITEM        ; Get next item (no carry).
                 INC     STH             ; Add carry to 'store index' high order.
 TONEXTITEM:     JMP     NEXTITEM        ; Get next command item.
-
+CRLF:
+                ;LDA     #$0D            ; Send CR
+                ;JSR     ECHO
+                ;LDA     #$0A            ; Send LF
+                ;JMP     ECHO
+				
+				JMP		CRLF
 RUNPROG:
                 JMP     (XAML)          ; Run at current XAM index.
 
@@ -129,10 +136,13 @@ SETADR:         LDA     L-1,X           ; Copy hex data to
 
 NXTPRNT:
                 BNE     PRDATA          ; NE means no address to print.
-                LDA     #$0D            ; CR.
-                JSR     ECHO            ; Output it.
-                LDA     #$0A            ; LF.
-                JSR     ECHO            ; Output it.
+                ;LDA     #$0D            ; CR.
+                ;JSR     ECHO            ; Output it.
+                ;LDA     #$0A            ; LF.
+                ;JSR     ECHO            ; Output it.
+				
+				JSR		CRLF
+				
                 LDA     XAMH            ; 'Examine index' high-order byte.
                 JSR     PRBYTE          ; Output it in hex format.
                 LDA     XAML            ; Low-order 'examine index' byte.
