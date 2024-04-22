@@ -1,1 +1,7 @@
 tmp/
+build/
+*.o
+*.bin
+*.hex
+*.lbl
+
