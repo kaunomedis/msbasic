@@ -18,7 +18,8 @@ READ_PTR:       .res 1
 WRITE_PTR:      .res 1
 
 .segment "INPUT_BUFFER"
-INPUT_BUFFER:   .res $100
+.org $300
+INPUT_BUFFER:   .res $FF
 
 .segment "HEADER"
 .segment "DUMMY"
@@ -31,15 +32,20 @@ INPUT_BUFFER:   .res $100
 
 .segment "BIOS"
 .org $FE00
+RESET2:
+				;lda #$5A
+				;jsr CHROUT
+				;jsr CRLF
+				;jmp RESET
 
-				jmp RESET
-;RESET:			sei
-;				cld
-;				ldx #$FF
-;				txs
-;				CLI
-;LOOP1:			nop
-;				jmp LOOP1
+				sei
+				cld
+				;ldx #$FF
+				;txs
+				CLI
+LOOP1:			nop
+				JSR CHRIN
+				jmp LOOP1
 
 ; Input a character from the serial interface.
 ; On return, carry flag indicates whether a key was pressed
@@ -75,32 +81,32 @@ CHROUT:
 ; Initialize the circular input buffer
 ; Modifies: flags, A
 INIT_BUFFER:
-                lda READ_PTR
-                sta WRITE_PTR
+                lda $2; READ_PTR
+                sta $1; WRITE_PTR
                 rts
 
 ; Write a character (from the A register) to the circular input buffer
 ; Modifies: flags, X
 WRITE_BUFFER:
-                ldx WRITE_PTR
+                ldx $1; WRITE_PTR
                 sta INPUT_BUFFER,x
-                inc WRITE_PTR
+                inc $1; WRITE_PTR
                 rts
 
 ; Read a character from the circular input buffer and put it in the A register
 ; Modifies: flags, A, X
 READ_BUFFER:
-                ldx READ_PTR
+                ldx $2; READ_PTR
                 lda INPUT_BUFFER,x
-                inc READ_PTR
+                inc $2; READ_PTR
                 rts
 
 ; Return (in A) the number of unread bytes in the circular input buffer
 ; Modifies: flags, A
 BUFFER_SIZE:
-                lda WRITE_PTR
+                lda $1; WRITE_PTR
                 sec
-                sbc READ_PTR
+                sbc $2; READ_PTR
                 rts
 SAVE:
 LOAD:			rts
@@ -108,10 +114,18 @@ LOAD:			rts
 IRQ_HANDLER:	
                 pha
                 phx
-                lda     ACIA_STATUS
+				
+                ; lda     ACIA_STATUS
                 ; For now, assume the only source of interrupts is incoming data
                 lda     ACIA_DATA
-                jsr     WRITE_BUFFER
+				sta     $166
+                ;jsr     WRITE_BUFFER
+				
+				ldx $1 ;WRITE_PTR
+                sta INPUT_BUFFER,x
+                inc $1; WRITE_PTR
+				sta     ACIA_DATA
+				
                 plx
                 pla
                 rti
@@ -120,6 +134,6 @@ IRQ_HANDLER:
 .include "wozmon.s"
 .segment "RESETVEC"
                 .word   $0F00           ; NMI vector
-                .word   RESET           ; RESET vector
+                .word   RESET2           ; RESET vector
                 .word   IRQ_HANDLER     ; IRQ vector
 				
